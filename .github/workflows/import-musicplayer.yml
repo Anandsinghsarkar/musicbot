@@ -1,0 +1,36 @@
+name: Import MusicPlayer
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout destination repo
+        uses: actions/checkout@v4
+
+      - name: Import MusicPlayer source
+        run: |
+          set -e
+          rm -rf /tmp/MusicPlayer
+          git clone --depth 1 https://github.com/AsmSafone/MusicPlayer /tmp/MusicPlayer
+          rm -rf ./* ./.[!.]* ./..?* 2>/dev/null || true
+          cp -a /tmp/MusicPlayer/. .
+          rm -rf .git
+
+          # Recreate git metadata after copying upstream files.
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git branch -M main
+          git add -A
+          git commit -m "Import MusicPlayer project"
+          git push -u origin main --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
